@@ -31,14 +31,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
     private static final String TAG = "Mapper";
-    private static final String[] INITIAL_PERMS={
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-    };
-    private static final int LOCATION_COARSE_REQUEST=37;
-    private static final int LOCATION_FINE_REQUEST=LOCATION_COARSE_REQUEST+1;
+    private static final int LOCATION_REQUEST=0;
     int permissionCoarseLocationCheck;
     int permissionFineLocationCheck;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,79 +56,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         permissionCoarseLocationCheck  = ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION);
         permissionFineLocationCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION);
-        if(permissionCoarseLocationCheck != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_COARSE_REQUEST);
-            Log.d(TAG, "requesting coarse perms");
+        if(permissionCoarseLocationCheck != PackageManager.PERMISSION_GRANTED || permissionFineLocationCheck != PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST);
+            Log.d(TAG, "requesting  location perms");
         }
         else{
             Log.d(TAG, "permissions already granted or not needed");
             enableSetLocation();
         }
 
-/*
-        // Add a marker in Sydney and move the camera
-        LatLng nyc = new LatLng(40.72493, -73.996599);
-        mMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(40.72493, -73.996599))
-                        .title("Thinkful Headquarters")
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.thinkful))
-                        .snippet("On a mission to reinvent education")
-
-                //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-        ).showInfoWindow();
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(40.72493, -73.996599), 12));
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(19), 2000, null);
-            }
-        }, 2000);
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);*/
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-
         switch (requestCode) {
-            case LOCATION_COARSE_REQUEST: {
+            case LOCATION_REQUEST: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "coarse location granted!");
-                    if(permissionFineLocationCheck != PackageManager.PERMISSION_GRANTED){
-                        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_FINE_REQUEST);
-                        Log.d(TAG, "requesting fine perms");
-                    }
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-                    Log.d(TAG, "request coarse location denied");
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-            }
-            case LOCATION_FINE_REQUEST:{
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "fine location granted & enabling Set Location!");
+                    Log.d(TAG, " location granted!");
                     enableSetLocation();
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
                 } else {
-                    Log.d(TAG, "request fine location denied");
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    Log.d(TAG, "request location denied");
                 }
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
     public void enableSetLocation(){
@@ -164,15 +111,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, e.toString());
             return;
         }
-        // Add a marker in Sydney and move the camera
+        //if current location null, exit. should happen very infrequently.
+        if(mCurrentLocation == null) return;
+
+        // Add a marker for last known location and move the camera
         LatLng lastKnownLocation = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
         mMap.addMarker(new MarkerOptions()
                         .position(lastKnownLocation)
                         .title("Last Known Location")
-                        //.icon(BitmapDescriptorFactory.fromResource(R.drawable.thinkful))
                         .snippet("On a mission to find burritos!")
-
-                //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
         ).showInfoWindow();
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
