@@ -40,6 +40,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     int permissionFineLocationCheck;
     private Location mLastKnownLocation;
     private boolean mShowMe = false;
+    protected Switch mSwitch;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,19 +54,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
-        Switch mSwitch = (Switch)findViewById(R.id.switch1);
+        checkPermissions();
+        mSwitch = (Switch)findViewById(R.id.switch1);
+        mSwitch.setVisibility(View.INVISIBLE);
         mSwitch.setChecked(false);
         //attach a listener to check for changes in state
-        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
+        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView,
                                          boolean isChecked) {
                 if(isChecked){
                     Toast.makeText(getApplicationContext(), "Tracking is on!", Toast.LENGTH_SHORT).show();
                     mShowMe = true;
+                    checkPermissions();
                     showLocation();
-                }
+                   }
                 else{
                     Toast.makeText(getApplicationContext(), "Tracking is off!", Toast.LENGTH_SHORT).show();
                     mShowMe = false;
@@ -75,10 +79,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+
+    public void checkPermissions(){
         permissionCoarseLocationCheck  = ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION);
         permissionFineLocationCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION);
         if(permissionCoarseLocationCheck != PackageManager.PERMISSION_GRANTED || permissionFineLocationCheck != PackageManager.PERMISSION_DENIED){
@@ -87,25 +90,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         else{
             Log.d(TAG, "permissions already granted or not needed");
-           // enableSetLocation();
         }
+    }
+    public void showToggle(){
+        mSwitch.setVisibility(View.VISIBLE);
+    }
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (requestCode == LOCATION_REQUEST) {
-
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.d(TAG, " location granted!");
                     enableSetLocation();
-
                 } else {
                     Log.d(TAG, "request location denied");
                 }
         }
     }
+
+
     public void enableSetLocation(){
         try{
             mMap.setMyLocationEnabled(true);
@@ -113,6 +123,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         catch(SecurityException e){
             Log.d(TAG,e.toString());
         }
+        showToggle();
     }
 
     @Override
@@ -122,10 +133,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void removeLocation(){
+        if(mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    mGoogleApiClient, this);
+        }
         mMap.clear();
     }
-    public void showLocation(){
 
+    public void showLocation(){
+        if(!mShowMe) return;
         Location mCurrentLocation;
         try{
             mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -181,7 +197,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
-        if (mShowMe != true) return;
         showLocation();
         Log.i("Where am I?", "Latitude: " + location.getLatitude() + ", Longitude:" + location.getLongitude());
     }
@@ -197,6 +212,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onResume() {
         super.onResume();
+        //Toast.makeText(getApplicationContext(), "onResume", Toast.LENGTH_SHORT).show();
         if (mGoogleApiClient.isConnected()) {
             //setUpMapIfNeeded();    // <-from previous tutorial
             startLocationUpdates();
