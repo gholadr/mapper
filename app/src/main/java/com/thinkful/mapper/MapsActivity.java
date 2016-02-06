@@ -84,7 +84,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void checkPermissions(){
         permissionCoarseLocationCheck  = ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION);
         permissionFineLocationCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION);
-        if(permissionCoarseLocationCheck != PackageManager.PERMISSION_GRANTED || permissionFineLocationCheck != PackageManager.PERMISSION_DENIED){
+        if(permissionCoarseLocationCheck != PackageManager.PERMISSION_GRANTED || permissionFineLocationCheck != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST);
             Log.d(TAG, "requesting  location perms");
         }
